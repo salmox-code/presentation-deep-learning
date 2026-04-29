@@ -1,0 +1,1517 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>PaLM · Codex · LLaMA</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+:root{
+  --bg:#08090d; --bg2:#10131b; --panel:#151925; --panel2:#0d111a;
+  --ink:#eef3ff; --muted:#a9b4c9; --soft:#738099; --line:rgba(255,255,255,.14);
+  --palm:#5fc7e0; --codex:#c66ab8; --llama:#8bd66b; --gold:#f0c45c; --danger:#ff7b7b;
+  --font:Inter,Segoe UI,Arial,sans-serif; --mono:"JetBrains Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--font)}
+.deck{width:100vw;height:100vh;position:relative;background:radial-gradient(circle at 50% 45%,rgba(95,199,224,.12),transparent 28%),linear-gradient(135deg,#08090d,#0c1018 55%,#090b10)}
+.slide{position:absolute;inset:0;padding:76px 92px;display:none;overflow:hidden}
+.slide.active{display:flex;flex-direction:column}
+.slide:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(circle at center,#000 0,#000 45%,transparent 78%);pointer-events:none}
+.top{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;color:var(--soft);font-family:var(--mono);font-size:14px;letter-spacing:.18em;text-transform:uppercase}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--palm);box-shadow:0 0 18px var(--palm);margin-right:10px}
+.num{color:var(--soft)}
+h1.display{position:relative;z-index:2;font-size:86px;line-height:1.02;margin:96px 0 0;font-weight:800}
+h2.title{position:relative;z-index:2;font-size:58px;line-height:1.06;margin:44px 0 18px;font-weight:780}
+.lead{position:relative;z-index:2;font-size:28px;line-height:1.45;color:var(--muted);max-width:1180px}
+.subhead{position:relative;z-index:2;font-size:24px;line-height:1.4;color:var(--muted);margin:0 0 18px}
+.grid2{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:46px;align-items:stretch;flex:1}
+.grid3{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.stack{display:flex;flex-direction:column;gap:24px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.035));border:1px solid var(--line);padding:28px;box-shadow:0 18px 70px rgba(0,0,0,.22);transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.card:hover{transform:translateY(-6px);box-shadow:0 26px 78px rgba(0,0,0,.3);border-color:rgba(255,255,255,.24)}
+.card h3{margin:0 0 14px;font-size:28px}
+.card p,.card li{color:var(--muted);font-size:22px;line-height:1.45}
+.compact-bullets{list-style:none;padding:0;margin:0}
+.compact-bullets li{position:relative;padding-left:28px;margin:14px 0;font-size:22px;color:var(--muted);line-height:1.45}
+.compact-bullets li:before{content:"▸";position:absolute;left:0;color:var(--palm)}
+.accent{color:var(--palm)}
+.accent2{color:var(--codex)}
+.accent3{color:var(--llama)}
+.formula{font-family:var(--mono);font-size:20px;line-height:1.55;color:var(--ink);padding:18px 22px;background:#080b12;border:1px solid var(--line);margin-top:18px;white-space:pre-line}
+.microline{margin-top:14px;font-family:var(--mono);font-size:15px;letter-spacing:.08em;color:var(--soft);text-transform:uppercase}
+.hexgrid{position:absolute;inset:0;opacity:.28}
+.center-halo{position:absolute;left:50%;top:50%;width:330px;height:330px;border:2px solid var(--palm);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 80px rgba(95,199,224,.3);animation:pulse 2.8s ease-in-out infinite}
+.orbit{position:absolute;left:50%;top:50%;width:520px;height:520px;transform:translate(-50%,-50%);animation:orbit 22s linear infinite}
+.hex{position:absolute;width:116px;height:100px;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);display:grid;place-items:center;background:rgba(255,255,255,.08);border:1px solid var(--line);font-family:var(--mono);font-weight:700}
+.hex:nth-child(1){top:0;left:202px;color:var(--palm)}
+.hex:nth-child(2){right:0;top:304px;color:var(--codex)}
+.hex:nth-child(3){left:0;top:304px;color:var(--llama)}
+.cover-wrap{position:relative;z-index:3;display:flex;flex-direction:column;justify-content:center;min-height:100%;text-align:center}
+.cover-sub{font-size:28px;color:var(--muted);margin-top:26px;max-width:1180px;margin-left:auto;margin-right:auto}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;max-width:1080px;margin:54px auto 0;text-align:left}
+.meta-card{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.035));border:1px solid var(--line);padding:28px 30px;box-shadow:0 18px 70px rgba(0,0,0,.22)}
+.meta-card h3{font-size:20px;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink);margin:0 0 18px}
+.meta-card ul{list-style:none;padding:0;margin:0}
+.meta-card li{font-size:24px;line-height:1.55;color:var(--muted)}
+.slide-foot{margin-top:34px;font-family:var(--mono);font-size:16px;letter-spacing:.12em;color:var(--soft)}
+.timeline-panel{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:26px;padding-top:50px}
+.timeline-panel:before{content:"";position:absolute;left:6%;right:6%;top:24px;height:2px;background:linear-gradient(90deg,var(--codex),var(--palm),var(--llama))}
+.milestone{position:relative;padding:26px 24px 22px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.035));border:1px solid var(--line);box-shadow:0 18px 70px rgba(0,0,0,.22);transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.milestone:hover{transform:translateY(-6px);box-shadow:0 26px 78px rgba(0,0,0,.3);border-color:rgba(255,255,255,.24)}
+.milestone:before{content:"";position:absolute;top:-33px;left:32px;width:18px;height:18px;border-radius:50%;border:3px solid var(--bg);background:var(--codex);box-shadow:0 0 0 6px rgba(198,106,184,.14)}
+.milestone.palm:before{background:var(--palm);box-shadow:0 0 0 6px rgba(95,199,224,.14)}
+.milestone.llama:before{background:var(--llama);box-shadow:0 0 0 6px rgba(139,214,107,.14)}
+.milestone .year{font-family:var(--mono);font-size:18px;letter-spacing:.12em;color:var(--soft);text-transform:uppercase}
+.milestone .text{margin-top:10px;font-size:28px;line-height:1.35;color:var(--ink)}
+.milestone .desc{margin-top:12px;font-size:19px;line-height:1.5;color:var(--muted)}
+.section-head{font-family:var(--mono);font-size:18px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);margin-bottom:16px}
+.model-card{position:relative;padding-top:38px}
+.model-card:before{content:"";position:absolute;top:22px;left:28px;width:44px;height:4px;border-radius:999px;background:var(--palm)}
+.model-card.codex:before{background:var(--codex)}
+.model-card.llama:before{background:var(--llama)}
+.model-card .micro,.badge-card .micro{margin-top:14px;font-family:var(--mono);font-size:15px;letter-spacing:.08em;color:var(--soft);text-transform:uppercase}
+.triad{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:34px}
+.badge-card{padding:34px 28px;text-align:left}
+.section-slide{justify-content:center;align-items:center;text-align:center}
+.section-slide .display{margin-top:0}
+.section-slide .cover-sub{max-width:none}
+.architecture-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.2fr .8fr;gap:28px;align-items:start}
+.note-card{background:rgba(255,255,255,.04);border:1px solid var(--line);padding:18px 20px;font-size:19px;color:var(--muted);line-height:1.5}
+.mini-table{width:100%;border-collapse:collapse;font-size:19px;background:rgba(255,255,255,.03);border:1px solid var(--line);margin-top:18px}
+.mini-table td,.mini-table th{padding:12px 14px;border:1px solid rgba(255,255,255,.09);text-align:center}
+.mini-table th{font-family:var(--mono);font-size:15px;letter-spacing:.08em;color:var(--ink)}
+.chip-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+.chip{padding:10px 14px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-family:var(--mono);font-size:15px;color:var(--muted)}
+.flow-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:26px}
+.flow-box{padding:20px;border:1px solid var(--line);background:rgba(255,255,255,.045);font-family:var(--mono);font-size:18px;color:var(--ink);text-align:center}
+.nav{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:10;color:var(--soft);font-family:var(--mono);font-size:13px;letter-spacing:.12em}
+.progress{position:fixed;left:0;bottom:0;height:4px;background:linear-gradient(90deg,var(--palm),var(--codex),var(--llama));z-index:10;transition:width .25s ease}
+.fade{animation:fadeUp .7s ease both}
+.delay1{animation-delay:.15s}
+.delay2{animation-delay:.3s}
+.delay3{animation-delay:.45s}
+.cinematic-card{position:relative;overflow:hidden}
+.cinematic-card:after{content:"";position:absolute;inset:-20%;background:radial-gradient(circle at top right,rgba(95,199,224,.12),transparent 28%);pointer-events:none}
+.pipeline-stage{position:relative;min-height:520px}
+.token-runway{display:flex;align-items:center;justify-content:space-between;gap:26px;margin-top:22px}
+.token-cluster,.id-cluster{display:flex;gap:18px;align-items:center}
+.big-token,.id-token{padding:18px 26px;border-radius:18px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);font-family:var(--mono);font-size:42px;font-weight:700;letter-spacing:.04em}
+.id-token{font-size:34px;opacity:0;transform:scale(.85)}
+.id-token.focus{border-color:rgba(95,199,224,.75);box-shadow:0 0 24px rgba(95,199,224,.45);color:var(--palm)}
+.embedding-stage{display:grid;grid-template-columns:1.1fr .9fr;gap:26px;align-items:center;margin-top:28px}
+.embedding-grid{display:grid;grid-template-columns:repeat(4,60px);grid-auto-rows:42px;gap:8px;justify-content:start}
+.embed-cell{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);border-radius:10px}
+.embed-cell.hot{background:linear-gradient(135deg,rgba(95,199,224,.22),rgba(95,199,224,.58));border-color:rgba(95,199,224,.75);box-shadow:0 0 20px rgba(95,199,224,.28)}
+.vector-lane{position:relative;height:116px;border:1px solid var(--line);border-radius:20px;background:rgba(8,11,18,.78);overflow:hidden}
+.vector-pill{position:absolute;left:22px;top:38px;padding:12px 18px;border-radius:999px;background:rgba(95,199,224,.14);border:1px solid rgba(95,199,224,.5);font-family:var(--mono);font-size:18px;color:var(--ink);opacity:0}
+.stream-bar{position:absolute;left:22px;right:24px;bottom:26px;height:18px;border-radius:999px;background:linear-gradient(90deg,rgba(95,199,224,.18),rgba(95,199,224,.8),rgba(95,199,224,.18));box-shadow:0 0 26px rgba(95,199,224,.32);transform:scaleX(.12);transform-origin:left center}
+.stream-label{position:absolute;left:24px;bottom:52px;font-family:var(--mono);font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);opacity:0}
+.particle{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--palm);box-shadow:0 0 10px var(--palm);opacity:0}
+.particle.p1{left:28px;bottom:33px}
+.particle.p2{left:44px;bottom:33px}
+.particle.p3{left:60px;bottom:33px}
+.norm-box,.ffn-box,.residual-box,.lm-box,.cache-box{position:relative;border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.04);padding:22px;overflow:hidden}
+.norm-bars{display:flex;align-items:flex-end;gap:10px;height:110px;margin-top:18px}
+.norm-bars span{width:22px;border-radius:10px 10px 4px 4px;background:linear-gradient(180deg,rgba(95,199,224,.95),rgba(95,199,224,.18));height:var(--h)}
+.rope-stage{position:relative;height:240px;border:1px solid var(--line);border-radius:22px;background:rgba(8,11,18,.72);overflow:hidden}
+.rope-axis{position:absolute;left:50%;top:50%;width:170px;height:2px;background:rgba(255,255,255,.12);transform:translate(-50%,-50%)}
+.rope-axis.v{width:2px;height:170px}
+.rope-arrow{position:absolute;left:50%;top:50%;width:90px;height:0;border-top:4px solid currentColor;transform-origin:left center}
+.rope-arrow:after{content:"";position:absolute;right:-2px;top:-7px;border-left:12px solid currentColor;border-top:7px solid transparent;border-bottom:7px solid transparent}
+.rope-arrow.q{color:var(--palm);transform:translate(0,-2px) rotate(-18deg)}
+.rope-arrow.k{color:var(--gold);transform:translate(0,-2px) rotate(38deg)}
+.rope-tag{position:absolute;font-family:var(--mono);font-size:18px}
+.rope-tag.q{left:58%;top:30%;color:var(--palm)}
+.rope-tag.k{left:58%;top:62%;color:var(--gold)}
+.mqa-stage{position:relative;height:270px;border:1px solid var(--line);border-radius:22px;background:rgba(8,11,18,.72);overflow:hidden}
+.q-node,.shared-node{position:absolute;display:grid;place-items:center;width:84px;height:84px;border-radius:22px;font-family:var(--mono);font-size:22px;font-weight:700}
+.q-node{left:26px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16)}
+.q1{top:24px;color:#6fe5ff}
+.q2{top:96px;color:#ff9dc9}
+.q3{top:168px;color:#9de98a}
+.shared-node{right:34px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16)}
+.k-shared{top:54px;color:var(--gold)}
+.v-shared{top:148px;color:var(--palm)}
+.mqa-path{position:absolute;left:108px;right:118px;height:2px;background:linear-gradient(90deg,transparent,currentColor,transparent);transform-origin:left center;opacity:0}
+.path-q1k{top:72px;color:#6fe5ff;transform:rotate(-10deg)}
+.path-q2k{top:142px;color:#ff9dc9;transform:rotate(-26deg)}
+.path-q2v{top:146px;color:#ff9dc9;transform:rotate(8deg)}
+.path-q3v{top:214px;color:#9de98a;transform:rotate(-10deg)}
+.causal-grid{display:grid;grid-template-columns:100px repeat(3,1fr);gap:8px;margin-top:20px}
+.causal-grid .cell{min-height:62px;display:grid;place-items:center;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);font-family:var(--mono);font-size:18px;opacity:0}
+.causal-grid .cell.head{opacity:1;background:transparent;border-color:transparent;color:var(--soft)}
+.causal-grid .cell.mask{color:#ffb0b0;background:rgba(255,123,123,.16);border-color:rgba(255,123,123,.38)}
+.causal-grid .cell.ok{color:#bff9c2;background:rgba(139,214,107,.16);border-color:rgba(139,214,107,.36)}
+.merge-stage{position:relative;height:280px;border:1px solid var(--line);border-radius:24px;background:rgba(8,11,18,.72);overflow:hidden}
+.stream-line,.attn-line,.merged-line{position:absolute;height:18px;border-radius:999px;left:34px;right:34px}
+.stream-line{top:78px;background:linear-gradient(90deg,rgba(95,199,224,.18),rgba(95,199,224,.72));box-shadow:0 0 20px rgba(95,199,224,.18)}
+.attn-line{top:182px;background:linear-gradient(90deg,rgba(240,196,92,.12),rgba(240,196,92,.82));transform:translateX(38px) scaleX(.7);transform-origin:left center;opacity:0}
+.merge-plus{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.8);font-size:82px;font-weight:700;color:var(--ink);opacity:0}
+.merged-line{top:130px;background:linear-gradient(90deg,rgba(95,199,224,.26),rgba(95,199,224,1),rgba(240,196,92,.7));box-shadow:0 0 28px rgba(95,199,224,.35);opacity:0}
+.ffn-sequence{display:grid;grid-template-columns:.85fr 1.15fr;gap:26px;align-items:start}
+.expansion-stage{position:relative;height:160px;border:1px solid var(--line);border-radius:22px;background:rgba(8,11,18,.72);overflow:hidden;padding:22px}
+.width-bar{height:24px;border-radius:999px;background:linear-gradient(90deg,rgba(95,199,224,.28),rgba(95,199,224,.92));width:24%;box-shadow:0 0 20px rgba(95,199,224,.26);margin-top:24px}
+.width-bar.contract{width:100%;background:linear-gradient(90deg,rgba(240,196,92,.28),rgba(240,196,92,.92))}
+.width-note{margin-top:16px;font-family:var(--mono);font-size:16px;color:var(--soft);letter-spacing:.08em}
+.activation-stage{position:relative;height:220px;border:1px solid var(--line);border-radius:22px;background:rgba(8,11,18,.72);overflow:hidden}
+.activation-stage svg{position:absolute;inset:0;width:100%;height:100%}
+.curve-point{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--gold);box-shadow:0 0 14px rgba(240,196,92,.55)}
+.logits-stage,.softmax-stage,.cache-compare,.choice-stage,.pipeline-overview{position:relative;border:1px solid var(--line);border-radius:22px;background:rgba(8,11,18,.72);padding:22px;overflow:hidden}
+.matrix-door{display:flex;align-items:center;gap:18px;margin-top:18px}
+.door-vector{padding:12px 18px;border-radius:999px;border:1px solid rgba(95,199,224,.42);background:rgba(95,199,224,.12);font-family:var(--mono);font-size:18px}
+.door-box{flex:1;min-height:120px;border-radius:20px;border:1px solid rgba(255,255,255,.12);display:grid;place-items:center;font-family:var(--mono);font-size:28px;color:var(--ink);position:relative}
+.door-box:before{content:"";position:absolute;inset:12px;border:1px dashed rgba(255,255,255,.12);border-radius:14px}
+.tiny-note{margin-top:14px;color:var(--muted);font-size:19px;line-height:1.45}
+.bars{display:flex;flex-direction:column;gap:14px;margin-top:20px}
+.bar-row{display:grid;grid-template-columns:80px 1fr 60px;gap:14px;align-items:center;font-family:var(--mono);font-size:18px}
+.bar-track{height:20px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.bar-fill{height:100%;width:var(--w);background:linear-gradient(90deg,rgba(95,199,224,.28),rgba(95,199,224,.96));box-shadow:0 0 18px rgba(95,199,224,.28)}
+.bar-fill.win{background:linear-gradient(90deg,rgba(139,214,107,.28),rgba(139,214,107,.98));box-shadow:0 0 18px rgba(139,214,107,.35)}
+.choice-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.choice-card{border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:18px;background:rgba(255,255,255,.04)}
+.cache-slots{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:20px}
+.slot{padding:14px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);font-family:var(--mono);font-size:16px;transform:translateY(16px);opacity:0}
+.split-cache{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}
+.split-card{border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:18px;background:rgba(255,255,255,.04)}
+.mini-cache{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.mini-cache span{padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.06);font-family:var(--mono);font-size:14px}
+.pipeline-track{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;align-items:center;margin-top:26px}
+.pipe-step{position:relative;padding:18px 14px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);text-align:center;font-family:var(--mono);font-size:17px;opacity:.45}
+.pipe-step.act{border-color:rgba(95,199,224,.5);box-shadow:0 0 24px rgba(95,199,224,.16)}
+.pipe-arrow{height:2px;background:linear-gradient(90deg,rgba(95,199,224,.1),rgba(95,199,224,.6),rgba(95,199,224,.1))}
+.act-nodes{display:flex;gap:16px;justify-content:center;margin-top:26px}
+.act-node{padding:14px 18px;border-radius:999px;border:1px solid rgba(95,199,224,.28);background:rgba(95,199,224,.08);font-family:var(--mono);font-size:15px;letter-spacing:.08em;color:var(--ink);opacity:.5}
+.slide.active .token-cluster{animation:fadeUp .7s ease both}
+.slide.active .big-token:nth-child(1){animation:fadeUp .7s ease both}
+.slide.active .big-token:nth-child(2){animation:fadeUp .7s ease .2s both}
+.slide.active .id-token{animation:tokenReveal .8s ease 1s both}
+.slide.active .id-token.focus{animation:tokenReveal .8s ease 1.2s both, tokenPulse 1.4s ease 2.1s infinite}
+.slide.active .embedding-grid{animation:fadeUp .7s ease 2.2s both}
+.slide.active .embed-cell.hot{animation:hotRow 1.2s ease 2.8s both}
+.slide.active .vector-pill{animation:slideVector 1s ease 3s both}
+.slide.active .stream-bar{animation:growBar 1.1s ease 4s both}
+.slide.active .stream-label{animation:fadeUp .7s ease 4.2s both}
+.slide.active .particle{animation:particleFlow 2.6s linear 4.4s infinite}
+.slide.active .norm-bars span{animation:normEq 1.1s ease .35s forwards}
+.slide.active .rope-arrow.q{animation:ropeTurnQ 1.5s ease .6s forwards}
+.slide.active .rope-arrow.k{animation:ropeTurnK 1.5s ease .9s forwards}
+.slide.active .mqa-path{animation:pathGlow 1.2s ease forwards}
+.slide.active .path-q1k{animation-delay:.4s}
+.slide.active .path-q2k{animation-delay:.8s}
+.slide.active .path-q2v{animation-delay:1.2s}
+.slide.active .path-q3v{animation-delay:1.6s}
+.slide.active .causal-grid .cell.reveal{animation:cellReveal .55s ease forwards}
+.slide.active .causal-grid .cell.reveal.d1{animation-delay:.3s}
+.slide.active .causal-grid .cell.reveal.d2{animation-delay:.5s}
+.slide.active .causal-grid .cell.reveal.d3{animation-delay:.7s}
+.slide.active .causal-grid .cell.reveal.d4{animation-delay:.9s}
+.slide.active .causal-grid .cell.reveal.d5{animation-delay:1.1s}
+.slide.active .causal-grid .cell.reveal.d6{animation-delay:1.3s}
+.slide.active .causal-grid .cell.reveal.d7{animation-delay:1.5s}
+.slide.active .causal-grid .cell.reveal.d8{animation-delay:1.7s}
+.slide.active .causal-grid .cell.reveal.d9{animation-delay:1.9s}
+.slide.active .attn-line{animation:attnLift 1s ease .5s both}
+.slide.active .merge-plus{animation:mergePop .7s ease 1.2s both}
+.slide.active .merged-line{animation:fadeUp .7s ease 1.7s both, mergedGlow 1.7s ease 2.2s infinite}
+.slide.active .expansion-stage .width-bar.expand{animation:expandWidth 1s ease 1.2s forwards}
+.slide.active .expansion-stage .width-bar.contract{animation:contractWidth 1s ease 3.6s forwards}
+.slide.active .curve-point{animation:pointTravel 2.2s ease 2.1s infinite}
+.slide.active .curve-point.p2{animation-delay:2.7s}
+.slide.active .curve-point.p3{animation-delay:3.3s}
+.slide.active .door-vector{animation:slideVector .8s ease .4s both}
+.slide.active .door-box{animation:glowFrame 1.2s ease .9s both}
+.slide.active .bar-fill{animation:barGrow 1.1s ease .7s both}
+.slide.active .choice-card{animation:fadeUp .7s ease both}
+.slide.active .choice-card.delay-soft{animation-delay:.3s}
+.slide.active .slot{animation:slotDrop .6s ease forwards}
+.slide.active .slot.s1{animation-delay:.4s}
+.slide.active .slot.s2{animation-delay:.7s}
+.slide.active .slot.s3{animation-delay:1s}
+.slide.active .slot.s4{animation-delay:1.3s}
+.slide.active .pipe-step{animation:pipeBlink .8s ease forwards}
+.slide.active .pipe-step.p1{animation-delay:.2s}
+.slide.active .pipe-step.p2{animation-delay:.8s}
+.slide.active .pipe-step.p3{animation-delay:1.4s}
+.slide.active .pipe-step.p4{animation-delay:2s}
+.slide.active .pipe-step.p5{animation-delay:2.6s}
+.slide.active .pipe-step.p6{animation-delay:3.2s}
+.slide.active .pipe-step.p7{animation-delay:3.8s}
+.slide.active .act-node{animation:fadeUp .7s ease forwards}
+.slide.active .act-node.a1{animation-delay:.4s}
+.slide.active .act-node.a2{animation-delay:1.2s}
+.slide.active .act-node.a3{animation-delay:2s}
+.slide.active .act-node.a4{animation-delay:2.8s}
+@keyframes tokenReveal{from{opacity:0;transform:translateY(20px) scale(.85)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes tokenPulse{50%{box-shadow:0 0 34px rgba(95,199,224,.68)}}
+@keyframes hotRow{0%{transform:scale(.94);opacity:.3}60%{transform:scale(1.04);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes slideVector{from{opacity:0;transform:translateX(-70px)}to{opacity:1;transform:translateX(0)}}
+@keyframes growBar{from{transform:scaleX(.12)}to{transform:scaleX(1)}}
+@keyframes particleFlow{0%{opacity:0;transform:translateX(0)}15%{opacity:1}100%{opacity:0;transform:translateX(760px)}}
+@keyframes normEq{0%{height:var(--h)}100%{height:76px}}
+@keyframes ropeTurnQ{from{transform:translate(0,-2px) rotate(-18deg)}to{transform:translate(0,-2px) rotate(28deg)}}
+@keyframes ropeTurnK{from{transform:translate(0,-2px) rotate(38deg)}to{transform:translate(0,-2px) rotate(94deg)}}
+@keyframes pathGlow{0%{opacity:0;filter:blur(4px)}100%{opacity:1;filter:blur(0)}}
+@keyframes cellReveal{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+@keyframes attnLift{from{opacity:0;transform:translateX(38px) scaleX(.7)}to{opacity:1;transform:translateX(0) scaleX(1)}}
+@keyframes mergePop{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}70%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes mergedGlow{50%{box-shadow:0 0 40px rgba(95,199,224,.58)}}
+@keyframes expandWidth{from{width:24%}to{width:100%}}
+@keyframes contractWidth{from{width:100%}to{width:24%}}
+@keyframes pointTravel{0%{opacity:0;left:12%;top:72%}15%{opacity:1}100%{opacity:0;left:76%;top:22%}}
+@keyframes glowFrame{50%{box-shadow:0 0 30px rgba(95,199,224,.24)}}
+@keyframes barGrow{from{width:0}to{width:var(--w)}}
+@keyframes slotDrop{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pipeBlink{0%{opacity:.18;transform:translateY(16px)}100%{opacity:1;transform:translateY(0);box-shadow:0 0 24px rgba(95,199,224,.18);border-color:rgba(95,199,224,.48)}}
+@keyframes pulse{50%{transform:translate(-50%,-50%) scale(1.06);box-shadow:0 0 120px rgba(95,199,224,.45)}}
+@keyframes orbit{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:900px){
+  .slide{padding:42px 28px}
+  h1.display{font-size:48px}
+  h2.title{font-size:36px}
+  .lead,.cover-sub,.subhead{font-size:20px}
+  .grid2,.grid3,.triad,.timeline-panel,.meta-grid,.architecture-grid,.flow-steps,.ffn-sequence,.choice-row,.split-cache,.pipeline-track{grid-template-columns:1fr}
+  .card p,.card li,.compact-bullets li,.meta-card li,.milestone .desc,.note-card,.formula{font-size:17px}
+  .center-halo,.orbit{display:none}
+  .timeline-panel:before{left:0;right:0}
+}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+<section class="slide active">
+  <svg class="hexgrid" viewBox="0 0 1920 1080"><defs><pattern id="h" width="72" height="62" patternUnits="userSpaceOnUse"><path d="M18 1h36l18 30-18 30H18L0 31z" fill="none" stroke="rgba(255,255,255,.12)"/></pattern></defs><rect width="100%" height="100%" fill="url(#h)"/></svg>
+  <div class="top"><span><span class="dot"></span>Présentation académique · 2026</span><span class="num">01 / 22</span></div>
+  <div class="center-halo"></div>
+  <div class="orbit"><div class="hex">PaLM</div><div class="hex">Codex</div><div class="hex">LLaMA</div></div>
+  <div class="cover-wrap">
+    <h1 class="display fade">PaLM · Codex · LLaMA</h1>
+    <p class="cover-sub fade delay1">Architecture, performances &amp; innovations des grands modèles de langage</p>
+    <div class="meta-grid fade delay2">
+      <div class="meta-card"><h3>Présenté par</h3><ul><li>Haiti Aya</li><li>Salma Nechda</li><li>Hasnae El Ballaoui</li><li>Rim Mazgout</li></ul></div>
+      <div class="meta-card"><h3>Encadré par</h3><ul><li>Mohammed Cherradi</li></ul></div>
+    </div>
+    <div class="slide-foot fade delay3">Présentation académique · 2026</div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Évolution des LLMs</span><span class="num">02 / 22</span></div>
+  <h2 class="title">Évolution des LLMs</h2>
+  <div class="timeline-panel">
+    <div class="milestone fade"><div class="year">2021</div><div class="text">OpenAI publie Codex</div><div class="desc">Un modèle orienté génération de code qui marque une spécialisation forte des LLMs vers les tâches de programmation.</div></div>
+    <div class="milestone palm fade delay1"><div class="year">2022</div><div class="text">Google répond avec PaLM</div><div class="desc">Google mise sur l'échelle, le multilinguisme et l'infrastructure Pathways pour étendre les capacités générales du modèle.</div></div>
+    <div class="milestone llama fade delay2"><div class="year">2023</div><div class="text">Meta démocratise l'accès avec LLaMA</div><div class="desc">Meta favorise l'efficacité et l'ouverture à la recherche, ce qui accélère la diffusion des LLMs dans l'écosystème académique.</div></div>
+  </div>
+  <p class="lead fade delay3" style="max-width:1440px">« Trois laboratoires, trois modèles, trois visions différentes des grands modèles de langage. Ces modèles sont entraînés sur des milliards de mots et peuvent généraliser. »</p>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Vue d'ensemble</span><span class="num">03 / 22</span></div>
+  <h2 class="title">Les trois modèles et le plan de la présentation</h2>
+  <div class="stack">
+    <div>
+      <div class="section-head">Présentation des modèles</div>
+      <div class="grid3">
+        <div class="card model-card fade"><h3 class="accent">PaLM (Google)</h3><p>Modèle généraliste, raisonnement multilingue, infrastructure Pathways.</p><div class="micro">Grande échelle · généralisation · TPU</div></div>
+        <div class="card model-card codex fade delay1"><h3 class="accent2">Codex (OpenAI)</h3><p>Dérivé de GPT-3, spécialisé en génération de code, moteur de GitHub Copilot.</p><div class="micro">Code assisté · complétion · productivité</div></div>
+        <div class="card model-card llama fade delay2"><h3 class="accent3">LLaMA (Meta)</h3><p>Open-source, 7–65 milliards de paramètres, performant avec moins d'infrastructure.</p><div class="micro">Efficience · recherche · accessibilité</div></div>
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:8px">
+      <div class="card fade"><div class="section-head">Plan de la présentation</div><p style="margin:0 0 14px;color:var(--ink);font-size:23px">Pour chaque modèle, nous étudierons :</p><ul class="compact-bullets"><li>Architecture interne</li><li>Choix d'entraînement</li><li>Capacités</li><li>Limites</li></ul></div>
+      <div class="card fade delay1" style="display:flex;align-items:center"><p class="lead" style="margin:0;max-width:none;color:var(--ink);font-size:25px">« Cette comparaison permet de comprendre comment et pourquoi ces modèles ont été conçus différemment. »</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>PaLM</span><span class="num">04 / 22</span></div>
+  <h2 class="title">Introduction à PaLM</h2>
+  <div class="grid2" style="margin-top:38px">
+    <div class="card fade">
+      <ul class="compact-bullets">
+        <li>Pathways Language Model (PaLM) — Google, 2022</li>
+        <li>Decoder-only Transformer : génération token par token</li>
+        <li>Trois tailles : 8B / 62B / 540B paramètres</li>
+        <li>Infrastructure Pathways pour l'entraînement distribué sur TPU</li>
+      </ul>
+      <p style="margin-top:20px;color:var(--ink);font-size:22px">PaLM vise à combiner taille, diversité des données et calcul distribué pour améliorer la compréhension, la génération et le raisonnement.</p>
+    </div>
+    <div class="card fade delay1">
+      <h3>Repères</h3>
+      <div class="chip-row"><div class="chip">Google</div><div class="chip">2022</div><div class="chip">Pathways</div><div class="chip">540B</div></div>
+      <p style="margin-top:22px">Le modèle appartient à la génération de LLMs conçus pour raisonner sur de longs contextes et bénéficier d'un entraînement à très grande échelle.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Écosystème LLM</span><span class="num">05 / 22</span></div>
+  <h2 class="title">PaLM, Codex et LLaMA</h2>
+  <p class="subhead">Positionnement dans l'écosystème LLM</p>
+  <div class="triad">
+    <div class="card badge-card fade"><h3 class="accent2">Codex (OpenAI)</h3><p>→ spécialisé sur le code</p><div class="micro">Complétion, synthèse et assistance à la programmation.</div></div>
+    <div class="card badge-card fade delay1"><h3 class="accent3">LLaMA (Meta)</h3><p>→ optimisé pour l'efficacité, open-source</p><div class="micro">Recherche, réutilisation et efficacité computationnelle.</div></div>
+    <div class="card badge-card fade delay2"><h3 class="accent">PaLM (Google)</h3><p>→ généraliste, très grande échelle</p><div class="micro">Raisonnement, multilinguisme et montée en taille via Pathways.</div></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Motivations</span><span class="num">06 / 22</span></div>
+  <h2 class="title">Pourquoi PaLM était nécessaire ?</h2>
+  <p class="subhead">Limites des modèles précédents</p>
+  <div class="grid2" style="margin-top:22px">
+    <div class="card fade"><ul class="compact-bullets"><li>Taille excessive pour une seule machine</li><li>Modèles mono-tâche ou peu flexibles</li></ul></div>
+    <div class="card fade delay1"><ul class="compact-bullets"><li>Raisonnement superficiel</li><li>Inefficience énergétique et matérielle</li></ul></div>
+  </div>
+  <div class="card fade delay2" style="margin-top:34px;flex:1;display:flex;align-items:center"><p class="lead" style="max-width:none;margin:0">PaLM a été conçu pour dépasser ces limites en exploitant un entraînement distribué, une échelle plus ambitieuse et une meilleure polyvalence entre les tâches linguistiques.</p></div>
+</section>
+
+<section class="slide section-slide">
+  <div class="top"><span><span class="dot"></span>Section III</span><span class="num"></span></div>
+  <div class="center-halo" style="opacity:.4"></div>
+  <h1 class="display fade">IArchitecture de PaLM - Pipeline d'inf&eacute;rence</h1>
+  <p class="cover-sub fade delay1">Du texte brut &agrave; la pr&eacute;diction - 4 actes</p>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Acte 1</span><span class="num"></span></div>
+  <h2 class="title">L'entr&eacute;e sur l'autoroute de l'information</h2>
+  <div class="card cinematic-card pipeline-stage">
+    <div class="token-runway">
+      <div class="token-cluster">
+        <div class="big-token">the</div>
+        <div class="big-token">cat</div>
+      </div>
+      <div class="id-cluster">
+        <div class="id-token">[5]</div>
+        <div class="id-token focus">[42]</div>
+      </div>
+    </div>
+    <div class="embedding-stage">
+      <div>
+        <div class="section-head">Matrice d'embedding 6 &times; 4</div>
+        <div class="embedding-grid">
+          <div class="embed-cell"></div><div class="embed-cell"></div><div class="embed-cell"></div><div class="embed-cell"></div>
+          <div class="embed-cell"></div><div class="embed-cell"></div><div class="embed-cell"></div><div class="embed-cell"></div>
+          <div class="embed-cell"></div><div class="embed-cell"></div><div class="embed-cell"></div><div class="embed-cell"></div>
+          <div class="embed-cell"></div><div class="embed-cell"></div><div class="embed-cell"></div><div class="embed-cell"></div>
+          <div class="embed-cell hot"></div><div class="embed-cell hot"></div><div class="embed-cell hot"></div><div class="embed-cell hot"></div>
+          <div class="embed-cell"></div><div class="embed-cell"></div><div class="embed-cell"></div><div class="embed-cell"></div>
+        </div>
+      </div>
+      <div class="vector-lane">
+        <div class="vector-pill">[0.23, -0.87, 0.45, ...]</div>
+        <div class="stream-label">Residual Stream</div>
+        <div class="stream-bar"></div>
+        <div class="particle p1"></div>
+        <div class="particle p2"></div>
+        <div class="particle p3"></div>
+      </div>
+    </div>
+    <div class="note-card" style="margin-top:28px">Ce vecteur est le point de d&eacute;part du Residual Stream - une autoroute d'information qui traverse tout le r&eacute;seau et s'affine &agrave; chaque couche.</div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Acte 2a</span><span class="num"></span></div>
+  <h2 class="title">Pre-Norm + RoPE</h2>
+  <div class="architecture-grid">
+    <div class="card cinematic-card">
+      <h3>LayerNorm (Pre-Norm)</h3>
+      <div class="norm-box">
+        <div class="door-vector">Residual Stream &rarr; x</div>
+        <div class="norm-bars">
+          <span style="--h:102px"></span>
+          <span style="--h:54px"></span>
+          <span style="--h:88px"></span>
+          <span style="--h:34px"></span>
+          <span style="--h:96px"></span>
+          <span style="--h:62px"></span>
+        </div>
+      </div>
+      <p class="tiny-note">Normalisation avant l'attention pour stabiliser les calculs.</p>
+    </div>
+    <div class="card cinematic-card">
+      <h3>RoPE</h3>
+      <div class="rope-stage">
+        <div class="rope-axis"></div>
+        <div class="rope-axis v"></div>
+        <div class="rope-arrow q"></div>
+        <div class="rope-arrow k"></div>
+        <div class="rope-tag q">Q</div>
+        <div class="rope-tag k">K</div>
+      </div>
+      <div class="formula katex-eq" data-expr="Q'_n = R(\theta_n) Q_n"></div>
+      <div class="formula katex-eq" data-expr="K'_m = R(\theta_m) K_m"></div>
+      <div class="formula katex-eq" data-expr="Q_n'^T K'_m = Q_n^T R(\theta_n - \theta_m) K_m"></div>
+      <p class="tiny-note">PaLM encode la position relative par rotation - pas de vecteur de position fixe.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Acte 2b</span><span class="num"></span></div>
+  <h2 class="title">Multi-Query Attention + Masquage causal</h2>
+  <div class="architecture-grid">
+    <div class="card cinematic-card">
+      <h3>MQA</h3>
+      <div class="mqa-stage">
+        <div class="q-node q1">Q<sub>1</sub></div>
+        <div class="q-node q2">Q<sub>2</sub></div>
+        <div class="q-node q3">Q<sub>3</sub></div>
+        <div class="shared-node k-shared">K</div>
+        <div class="shared-node v-shared">V</div>
+        <div class="mqa-path path-q1k"></div>
+        <div class="mqa-path path-q2k"></div>
+        <div class="mqa-path path-q2v"></div>
+        <div class="mqa-path path-q3v"></div>
+      </div>
+      <div class="formula katex-eq" data-expr="\mathrm{MQA} = \mathrm{Concat}_i(\mathrm{Attn}(Q_i, K, V))"></div>
+    </div>
+    <div class="card cinematic-card">
+      <h3>Masquage causal</h3>
+      <div class="causal-grid">
+        <div class="cell head"></div><div class="cell head">the</div><div class="cell head">cat</div><div class="cell head">?</div>
+        <div class="cell head">the</div><div class="cell ok reveal d1">0</div><div class="cell mask reveal d2">&minus;&infin;</div><div class="cell mask reveal d3">&minus;&infin;</div>
+        <div class="cell head">cat</div><div class="cell ok reveal d4">0</div><div class="cell ok reveal d5">0</div><div class="cell mask reveal d6">&minus;&infin;</div>
+        <div class="cell head">?</div><div class="cell ok reveal d7">0</div><div class="cell ok reveal d8">0</div><div class="cell ok reveal d9">0</div>
+      </div>
+      <div class="formula katex-eq" data-expr="\mathrm{Attn}(Q,K,V) = \mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_k}} + M\right)V"></div>
+      <p class="tiny-note">Le token &quot;cat&quot; ne voit que &quot;the&quot; et lui-m&ecirc;me.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Acte 2c</span><span class="num"></span></div>
+  <h2 class="title">Connexion r&eacute;siduelle</h2>
+  <div class="card cinematic-card">
+    <div class="merge-stage">
+      <div class="stream-line"></div>
+      <div class="attn-line"></div>
+      <div class="merge-plus">+</div>
+      <div class="merged-line"></div>
+    </div>
+    <div class="formula katex-eq" data-expr="h = x + \mathrm{Attention}(\mathrm{LayerNorm}(x))"></div>
+    <p class="tiny-note">L'information originale est pr&eacute;serv&eacute;e gr&acirc;ce &agrave; la connexion r&eacute;siduelle.</p>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Acte 3</span><span class="num"></span></div>
+  <h2 class="title">Le bloc FFN (LayerNorm &rarr; FFN &rarr; Add)</h2>
+  <div class="ffn-sequence">
+    <div class="card cinematic-card">
+      <h3>S&eacute;quence du bloc</h3>
+      <div class="norm-box" style="margin-bottom:20px">
+        <div class="section-head">1. LayerNorm</div>
+        <div class="norm-bars">
+          <span style="--h:104px"></span>
+          <span style="--h:42px"></span>
+          <span style="--h:90px"></span>
+          <span style="--h:58px"></span>
+          <span style="--h:100px"></span>
+          <span style="--h:48px"></span>
+        </div>
+      </div>
+      <div class="expansion-stage">
+        <div class="section-head">2. Expansion 4&times;</div>
+        <div class="width-bar expand"></div>
+        <div class="width-note">Expansion 4&times; - apprentissage de motifs complexes</div>
+      </div>
+      <div class="expansion-stage" style="margin-top:20px">
+        <div class="section-head">4. Contraction</div>
+        <div class="width-bar contract"></div>
+        <div class="width-note">Retour vers la largeur W avant la fusion.</div>
+      </div>
+    </div>
+    <div class="card cinematic-card">
+      <h3>3. Activation SwiGLU / GELU</h3>
+      <div class="activation-stage">
+        <svg viewBox="0 0 520 220" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M20 170 C120 170, 160 160, 220 120 S340 30, 500 20" fill="none" stroke="rgba(240,196,92,.95)" stroke-width="4"/>
+          <path d="M20 170 L500 170" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="2"/>
+          <path d="M60 200 L60 20" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="2"/>
+        </svg>
+        <div class="curve-point p1"></div>
+        <div class="curve-point p2"></div>
+        <div class="curve-point p3"></div>
+      </div>
+      <div class="formula katex-eq" data-expr="f(x) = x \cdot \Phi(x)"></div>
+      <div class="merge-stage" style="height:220px;margin-top:20px">
+        <div class="stream-line" style="top:58px"></div>
+        <div class="attn-line" style="top:142px"></div>
+        <div class="merge-plus">+</div>
+        <div class="merged-line" style="top:100px"></div>
+      </div>
+      <div class="formula katex-eq" data-expr="y = h + \mathrm{FFN}(\mathrm{LayerNorm}(h))"></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Acte 4a</span><span class="num"></span></div>
+  <h2 class="title">Sortie LM Head + Softmax</h2>
+  <div class="architecture-grid">
+    <div class="card cinematic-card">
+      <h3>LM Head</h3>
+      <div class="logits-stage">
+        <div class="matrix-door">
+          <div class="door-vector">h<sup>L</sup><sub>n</sub>(cat)</div>
+          <div class="door-box">W_out</div>
+        </div>
+        <div class="formula katex-eq" data-expr="\mathrm{logits} = W_{out} \cdot h_n^L"></div>
+        <div class="microline">O&ugrave; W_out &isin; R^{d_model &times; |V|}</div>
+        <div class="formula">V = {&quot;le&quot;, &quot;chien&quot;, &quot;mange&quot;}<br>logits = [2.5, 1.2, 0.4]</div>
+        <p class="tiny-note">Ce sont des scores bruts - pas encore des probabilit&eacute;s.</p>
+      </div>
+    </div>
+    <div class="card cinematic-card">
+      <h3>Softmax</h3>
+      <div class="softmax-stage">
+        <div class="formula katex-eq" data-expr="P_i = \frac{e^{z_i}}{\sum_{j=1}^{|V|} e^{z_j}}"></div>
+        <div class="bars">
+          <div class="bar-row"><span>sat</span><div class="bar-track"><div class="bar-fill win" style="--w:68%"></div></div><span>68%</span></div>
+          <div class="bar-row"><span>slept</span><div class="bar-track"><div class="bar-fill" style="--w:19%"></div></div><span>19%</span></div>
+          <div class="bar-row"><span>ran</span><div class="bar-track"><div class="bar-fill" style="--w:8%"></div></div><span>8%</span></div>
+          <div class="bar-row"><span>autres</span><div class="bar-track"><div class="bar-fill" style="--w:5%"></div></div><span>5%</span></div>
+        </div>
+        <p class="tiny-note">Conversion en distribution de probabilit&eacute; valide.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Acte 4b</span><span class="num"></span></div>
+  <h2 class="title">Choix du token + KV Cache</h2>
+  <div class="architecture-grid">
+    <div class="card cinematic-card">
+      <h3>Choix du prochain token</h3>
+      <div class="choice-stage">
+        <div class="choice-row">
+          <div class="choice-card">
+            <div class="section-head">Greedy</div>
+            <p style="margin:0;color:var(--muted);font-size:20px;line-height:1.45">On prend directement le mot le plus probable.</p>
+          </div>
+          <div class="choice-card delay-soft">
+            <div class="section-head">&Eacute;chantillonnage</div>
+            <p style="margin:0;color:var(--muted);font-size:20px;line-height:1.45">Top-k, top-p et temp&eacute;rature pour injecter de la vari&eacute;t&eacute;.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card cinematic-card">
+      <h3>KV Cache</h3>
+      <div class="cache-box">
+        <div class="cache-slots">
+          <div class="slot s1">K_the</div>
+          <div class="slot s2">V_the</div>
+          <div class="slot s3">K_cat</div>
+          <div class="slot s4">V_cat</div>
+        </div>
+        <div class="split-cache">
+          <div class="split-card">
+            <div class="section-head">MHA Standard</div>
+            <div class="mini-cache"><span>K1</span><span>V1</span><span>K2</span><span>V2</span><span>K3</span><span>V3</span></div>
+          </div>
+          <div class="split-card">
+            <div class="section-head">PaLM MQA</div>
+            <div class="mini-cache"><span>K partag&eacute;</span><span>V partag&eacute;</span></div>
+          </div>
+        </div>
+        <div class="microline" style="margin-top:20px;color:var(--palm)">Cache r&eacute;duit &rarr; G&eacute;n&eacute;ration plus rapide</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Synth&egrave;se</span><span class="num"></span></div>
+  <h2 class="title">Synth&egrave;se Pipeline Complet</h2>
+  <p class="subhead">Chaque bloc s'illumine &agrave; son tour, du texte jusqu'au prochain token.</p>
+  <div class="card cinematic-card">
+    <div class="pipeline-overview">
+      <div class="pipeline-track">
+        <div class="pipe-step act p1">Tokenisation</div>
+        <div class="pipe-step p2">Embedding</div>
+        <div class="pipe-step act p3">LayerNorm &rarr; RoPE + MQA &rarr; Add</div>
+        <div class="pipe-step p4">LayerNorm &rarr; FFN &rarr; Add</div>
+        <div class="pipe-step act p5">&times; N couches</div>
+        <div class="pipe-step p6">LM Head</div>
+        <div class="pipe-step act p7">Softmax &rarr; Token</div>
+      </div>
+      <div class="act-nodes">
+        <div class="act-node a1">Acte 1 - Entr&eacute;e</div>
+        <div class="act-node a2">Acte 2 - Attention</div>
+        <div class="act-node a3">Acte 3 - FFN</div>
+        <div class="act-node a4">Acte 4 - Sortie</div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Pathways</span><span class="num">17 / 22</span></div>
+  <h2 class="title">Pathways  – Définition</h2>
+  <div class="grid2">
+    <div class="card fade">
+      <ul class="compact-bullets">
+        <li>Pathways est l'infrastructure développée par Google pour exécuter PaLM à très grande échelle, servant de système d'orchestration distribué pour les calculs de ML sur des milliers d'accélérateurs.</li>
+        <li>Elle permet de coordonner des milliers de TPU/GPU pour entraîner un modèle colossal réparti sur de nombreux nœuds.</li>
+        <li>Objectif principal : maximiser l'efficacité matérielle et réduire les temps d'inactivité lors de l'entraînement et de l'inférence.</li>
+      </ul>
+    </div>
+    <div class="card fade delay1">
+      <h3>Idée centrale</h3>
+      <p>Pathways agit comme une couche de coordination à grande échelle : elle distribue les tâches, active les ressources au bon moment et maintient un haut niveau d'utilisation du matériel.</p>
+      <div class="chip-row"><div class="chip">Orchestration</div><div class="chip">TPU/GPU</div><div class="chip">Grande échelle</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Pathways</span><span class="num">18 / 22</span></div>
+  <h2 class="title">Pathways  – Activation partielle &amp; Multitask Learning</h2>
+  <div class="grid2">
+    <div class="card fade">
+      <ul class="compact-bullets">
+        <li>Activation partielle des paramètres : seules les parties du modèle nécessaires à la tâche sont activées, ce qui réduit l'utilisation mémoire et le temps de calcul.</li>
+        <li>Multitask Learning (MTL) : un modèle unique peut apprendre plusieurs tâches simultanément, en partageant des paramètres communs.</li>
+        <li>Pathways aide à réduire le catastrophic forgetting en permettant l'entraînement de plusieurs tâches sans effacer les performances antérieures.</li>
+      </ul>
+      <div class="formula">L_MTL = Σ(t=1→T) λ_t L_t(θ)</div>
+    </div>
+    <div class="card fade delay1">
+      <h3>Variables</h3>
+      <ul class="compact-bullets">
+        <li>T : nombre de tâches</li>
+        <li>λ_t : poids relatif de la tâche t</li>
+        <li>L_t(θ) : loss de la tâche t</li>
+        <li>θ : paramètres partagés du modèle</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Pathways</span><span class="num">19 / 22</span></div>
+  <h2 class="title">Pathways  – Orchestration &amp; parallélisme</h2>
+  <div class="grid2">
+    <div class="card fade">
+      <ul class="compact-bullets">
+        <li>Orchestration distribuée : Pathways coordonne les TPU/GPU et lance les opérations dès que les données sont prêtes, même avec des dépendances complexes.</li>
+        <li>Parallélisme de données : différents lots de données sont traités simultanément sur plusieurs accélérateurs.</li>
+        <li>Parallélisme de modèle : différentes parties du modèle sont distribuées sur plusieurs machines pour entraîner des modèles trop grands pour une seule puce.</li>
+      </ul>
+    </div>
+    <div class="card fade delay1">
+      <h3>Avantages clés</h3>
+      <ul class="compact-bullets">
+        <li>Permet un apprentissage multi-tâches massif</li>
+        <li>Optimisation de l'utilisation des ressources, avec une utilisation proche de 100 % des TPU</li>
+        <li>Réduction des coûts et de l'énergie par rapport aux anciens paradigmes distribués</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Entraînement</span><span class="num">20 / 22</span></div>
+  <h2 class="title">Entraînement du modèle</h2>
+  <div class="grid2">
+    <div class="card fade">
+      <h3>Dataset &amp; objectif</h3>
+      <ul class="compact-bullets">
+        <li>PaLM est pré-entraîné sur un corpus massif de ~780 milliards de tokens : pages web filtrées, livres, Wikipedia, presse, code source et conversations.</li>
+        <li>Ce corpus reprend en partie les mêmes sources que LaMDA, avec une forte diversité linguistique et contextuelle.</li>
+        <li>Tâche principale : next token prediction, de façon autoregressive.</li>
+        <li>Le modèle apprend à maximiser la probabilité du prochain token à partir du contexte précédent.</li>
+      </ul>
+      <div class="formula">L = - Σ(i=1→N) Σ(j=1→|V|) y_i,j log(ŷ_i,j)</div>
+    </div>
+    <div class="card fade delay1">
+      <h3>Optimisation &amp; scaling</h3>
+      <ul class="compact-bullets">
+        <li>La cross-entropy loss compare la distribution prédite à la distribution réelle one-hot.</li>
+        <li>Adafactor réduit l'utilisation mémoire en factorisant les moments nécessaires à l'optimisation.</li>
+        <li>Batchs très larges : milliers de tokens traités simultanément.</li>
+        <li>Data Parallelism : plusieurs lots sont traités en parallèle.</li>
+        <li>Model Parallelism : différentes parties du modèle sont réparties sur plusieurs TPU/GPU.</li>
+        <li>Objectif final : maximiser l'utilisation matérielle, avec une MFU très élevée.</li>
+      </ul>
+      <div class="microline">Dataset : ~780B · Objectif : next token · Loss : cross-entropy · Optimizer : Adafactor · Scaling : data + model parallelism</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="top"><span><span class="dot"></span>Performance</span><span class="num">21 / 22</span></div>
+  <h2 class="title">Capacités &amp; performances</h2>
+  <div class="grid2">
+    <div class="card fade">
+      <h3>Benchmarks &amp; raisonnement</h3>
+      <ul class="compact-bullets">
+        <li>Benchmarks utilisés : BIG-Bench, MMLU, HumanEval et autres suites de compréhension, génération et raisonnement.</li>
+        <li>Ils permettent de comparer PaLM à d'autres grands modèles comme GPT-3, Gopher ou Chinchilla.</li>
+        <li>Les tests few-shot évaluent la capacité à s'adapter avec quelques exemples, sans entraînement supplémentaire.</li>
+        <li>Les performances sont mesurées en compréhension, génération, raisonnement et code.</li>
+      </ul>
+    </div>
+    <div class="card fade delay1">
+      <h3>Scaling &amp; CoT</h3>
+      <ul class="compact-bullets">
+        <li>Les tâches de reasoning restent difficiles car elles exigent logique multi-étapes et maintien du contexte long.</li>
+        <li>Chain-of-Thought (CoT) aide le modèle à générer une pensée étape par étape avant la réponse finale.</li>
+        <li>CoT améliore la précision sur les problèmes de logique, de mathématiques et de raisonnement complexe.</li>
+        <li>L'augmentation du nombre de paramètres et de tokens améliore les performances de raisonnement.</li>
+        <li>PaLM 540B performe mieux sur les tâches complexes, surtout en few-shot et avec CoT.</li>
+      </ul>
+      <div class="microline">Benchmarks : BIG-Bench, MMLU, HumanEval · Few-shot · CoT · Scaling = meilleures performances</div>
+    </div>
+  </div>
+</section>
+
+
+    <section class="slide" data-label="Codex : titre">
+      <div class="top"><span><span class="dot"></span>OpenAI Codex</span><span class="num"></span></div>
+      <div class="grid2" style="margin-top:54px;align-items:center">
+        <div>
+          <div class="badge">Le modèle derrière GitHub Copilot</div>
+          <h2 class="title">OpenAI Codex  Du langage naturel au code</h2>
+          <p class="lead">Architecture, entraînement et évaluation dun modèle conçu pour comprendre une consigne et produire du code exploitable.</p>
+          <div class="grid4" style="margin-top:32px">
+            <div class="kpi"><b class="accent2">Août 2021</b><span>Annonce publique</span></div>
+            <div class="kpi"><b class="accent2">OpenAI</b><span>Développeur</span></div>
+            <div class="kpi"><b class="accent2"> 12B</b><span>Paramètres</span></div>
+            <div class="kpi"><b class="accent2">Code</b><span>Spécialisation</span></div>
+          </div>
+        </div>
+        <div class="card" style="min-height:470px;display:flex;flex-direction:column;justify-content:center">
+          <div class="codebox" style="font-size:24px"># Prompt
+cris une fonction Python qui inverse une chaîne.
+
+# Codex
+def inverser_chaine(texte: str) -> str:
+    return texte[::-1]</div>
+          <div class="pipeline" style="margin-top:26px">
+            <div class="block">Langage naturel</div>
+            <div class="arrow accent2"></div>
+            <div class="block">Compréhension</div>
+            <div class="arrow accent2"></div>
+            <div class="block">Code généré</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Codex : définition">
+      <div class="top"><span><span class="dot"></span>Qu’est-ce que Codex ?</span><span class="num"></span></div>
+      <h2 class="title">Qu’est-ce que Codex ?</h2>
+      <div class="pipeline" style="margin-top:18px">
+        <div class="block">GPT-3 généraliste</div>
+        <div class="arrow accent2"></div>
+        <div class="block">Fine-tuning sur du code</div>
+        <div class="arrow accent2"></div>
+        <div class="block">Codex expert en programmation</div>
+      </div>
+      <div class="grid2" style="margin-top:34px">
+        <div class="card">
+          <ul class="bullets lead" style="font-size:24px;max-width:none">
+            <li><span class="keyword">Codex</span> est basé sur <span class="keyword">GPT-3</span>.</li>
+            <li>Il a été spécialisé grâce à un entraînement supplémentaire sur du <span class="accent2 keyword">code</span>.</li>
+            <li>Il comprend des instructions en <span class="keyword">langage naturel</span>.</li>
+            <li>Il génère du code automatiquement dans plusieurs langages.</li>
+            <li>Il a propulsé les premières versions de <span class="keyword">GitHub Copilot</span>.</li>
+          </ul>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <h3>Données et capacité</h3>
+            <ul class="bullets">
+              <li>Corpus de code GitHub à grande échelle, avec une forte présence de <span class="keyword">Python</span>.</li>
+              <li>La littérature de référence mentionne environ <span class="accent2 keyword">159 Go de code Python</span>.</li>
+              <li>Fenêtre de contexte couramment citée : jusquà <span class="keyword">4 096 tokens</span>.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Idée clé</h3>
+            <p>La taille seule ne suffit pas : la <span class="accent2 keyword">spécialisation</span> sur le code améliore fortement les performances en programmation.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Codex : architecture">
+      <div class="top"><span><span class="dot"></span>Architecture</span><span class="num"></span></div>
+      <h2 class="title">Architecture  Decoder-only Transformer</h2>
+      <div class="grid2" style="margin-top:34px">
+        <div class="card">
+          <ul class="bullets lead" style="font-size:24px;max-width:none">
+            <li>Codex utilise une architecture <span class="keyword">Transformer</span> de type <span class="accent2 keyword">décodeur seul</span>.</li>
+            <li>Il na pas dencodeur séparé.</li>
+            <li>Le <span class="keyword">prompt</span> est considéré comme le début de la séquence.</li>
+            <li>Le modèle prédit le <span class="keyword">token suivant</span>.</li>
+            <li>Il applique une <span class="keyword">attention causale</span>.</li>
+          </ul>
+          <p class="lead" style="font-size:22px;margin-top:22px">Chaque token peut regarder les tokens précédents, jamais les tokens futurs.</p>
+        </div>
+        <div class="card">
+          <div class="pipeline" style="justify-content:center;margin-top:10px">
+            <div class="block">Prompt utilisateur</div>
+            <div class="arrow accent2"></div>
+            <div class="block">Tokens</div>
+            <div class="arrow accent2"></div>
+            <div class="block">Transformer décodeur</div>
+            <div class="arrow accent2"></div>
+            <div class="block">Token suivant</div>
+            <div class="arrow accent2"></div>
+            <div class="block">Code généré</div>
+          </div>
+          <svg viewBox="0 0 760 250" style="width:100%;margin-top:34px">
+            <rect x="40" y="100" width="110" height="54" rx="10" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)"/>
+            <rect x="190" y="100" width="110" height="54" rx="10" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)"/>
+            <rect x="340" y="78" width="150" height="98" rx="12" fill="rgba(198,106,184,.14)" stroke="rgba(198,106,184,.5)"/>
+            <rect x="530" y="100" width="110" height="54" rx="10" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)"/>
+            <line x1="150" y1="127" x2="190" y2="127" stroke="var(--codex)" stroke-width="3"/>
+            <line x1="300" y1="127" x2="340" y2="127" stroke="var(--codex)" stroke-width="3"/>
+            <line x1="490" y1="127" x2="530" y2="127" stroke="var(--codex)" stroke-width="3"/>
+            <text x="95" y="133" text-anchor="middle" fill="var(--ink)" font-family="var(--mono)" font-size="18">Prompt</text>
+            <text x="245" y="133" text-anchor="middle" fill="var(--ink)" font-family="var(--mono)" font-size="18">Tokens</text>
+            <text x="415" y="133" text-anchor="middle" fill="var(--ink)" font-family="var(--mono)" font-size="18">Decoder-only</text>
+            <text x="585" y="133" text-anchor="middle" fill="var(--ink)" font-family="var(--mono)" font-size="18">Sortie</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Codex : attention">
+      <div class="top"><span><span class="dot"></span>Attention causale</span><span class="num"></span></div>
+      <h2 class="title">Attention causale</h2>
+      <div class="grid2" style="margin-top:28px">
+        <div class="card">
+          <div class="formula">Attention(Q, K, V) = softmax((Q · K + M) / d) · V</div>
+          <ul class="bullets" style="margin-top:22px">
+            <li><span class="keyword">Q</span> = Query</li>
+            <li><span class="keyword">K</span> = Key</li>
+            <li><span class="keyword">V</span> = Value</li>
+            <li><span class="keyword">M</span> = masque causal</li>
+            <li><span class="keyword">d</span> = dimension des clés</li>
+          </ul>
+          <p class="lead" style="font-size:22px;margin-top:22px">Codex génère le code de gauche à droite, token par token.</p>
+        </div>
+        <div class="card">
+          <h3>Masque causal</h3>
+          <p>Le masque <span class="keyword">M</span> est une matrice triangulaire qui bloque laccès aux tokens futurs.</p>
+          <div class="codebox" style="margin-top:18px">t1        
+t2        
+t3        
+t4        </div>
+          <p class="mini" style="margin-top:16px"> = visible ·  = masqué</p>
+          <div class="badge" style="margin-top:22px">Idée clé : pas de fuite dinformation vers le futur</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Codex : tokenisation">
+      <div class="top"><span><span class="dot"></span>Tokenisation BPE</span><span class="num"></span></div>
+      <h2 class="title">Tokenisation BPE adaptée au code</h2>
+      <div class="grid2" style="margin-top:34px">
+        <div class="card">
+          <h3>Problème</h3>
+          <p>En <span class="keyword">Python</span>, lindentation est syntaxique et obligatoire.</p>
+          <h3 style="margin-top:24px">Solution</h3>
+          <ul class="bullets">
+            <li>Codex utilise une <span class="keyword">tokenisation adaptée au code</span>.</li>
+            <li>Les espaces, symboles, mots-clés et identifiants sont convertis en tokens.</li>
+            <li>Lalgorithme utilisé est de type <span class="accent2 keyword">BPE</span>  Byte Pair Encoding.</li>
+            <li>Le vocabulaire hérité de GPT-3 est généralement décrit comme <span class="keyword"> 50 000 tokens</span>.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="codebox">def add(a, b):
+    return a + b</div>
+          <div class="pipeline" style="margin-top:22px">
+            <div class="block">def</div>
+            <div class="block">add</div>
+            <div class="block">(</div>
+            <div class="block">a</div>
+            <div class="block">,</div>
+            <div class="block">b</div>
+            <div class="block">)</div>
+            <div class="block">:</div>
+            <div class="block">indent</div>
+            <div class="block">return</div>
+          </div>
+          <p class="lead" style="font-size:22px;margin-top:24px">Après tokenisation, chaque élément reçoit un identifiant puis une représentation numérique.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Codex : pipeline">
+      <div class="top"><span><span class="dot"></span>Pipeline dinférence</span><span class="num"></span></div>
+      <h2 class="title">Pipeline de génération autorégressive</h2>
+      <div class="flowgrid" style="grid-template-columns:repeat(3,1fr);margin-top:28px">
+        <div class="card"><h3>1. Tokenisation</h3><p>Texte ou code  tokens</p></div>
+        <div class="card"><h3>2. Embedding</h3><p>Chaque token devient un vecteur numérique</p></div>
+        <div class="card"><h3>3. Transformer</h3><p>Passage dans les couches avec attention causale</p></div>
+        <div class="card"><h3>4. Softmax</h3><p>Calcul des probabilités sur le vocabulaire</p></div>
+        <div class="card"><h3>5. Sélection</h3><p>Choix du token le plus probable ou échantillonné</p></div>
+        <div class="card"><h3>6. Boucle</h3><p>Le token généré est ajouté au prompt, puis le processus recommence</p></div>
+      </div>
+      <div class="pipeline" style="justify-content:center;margin-top:34px">
+        <div class="block">Prompt</div>
+        <div class="arrow accent2"></div>
+        <div class="block">Transformer</div>
+        <div class="arrow accent2"></div>
+        <div class="block">Softmax</div>
+        <div class="arrow accent2"></div>
+        <div class="block">Token</div>
+        <div class="arrow accent2"></div>
+      </div>
+      <p class="lead" style="font-size:24px;margin-top:26px">Codex continue jusquà produire une réponse complète, atteindre la limite de contexte ou générer un token de fin.</p>
+    </section>
+
+    <section class="slide" data-label="Codex : cross-entropy">
+      <div class="top"><span><span class="dot"></span>Entraînement</span><span class="num"></span></div>
+      <h2 class="title">Entraînement  Cross-Entropy Loss</h2>
+      <div class="grid2" style="margin-top:30px">
+        <div class="card">
+          <p class="lead" style="font-size:24px;max-width:none">Codex apprend à prédire le token suivant.</p>
+          <div class="formula">L = -(1/T)  Σ log P(tᵢ | ttᵢ ; θ)</div>
+          <ul class="bullets" style="margin-top:22px">
+            <li><span class="keyword">tᵢ</span> = token réel attendu</li>
+            <li><span class="keyword">P</span> = probabilité prédite</li>
+            <li><span class="keyword">θ</span> = paramètres du modèle</li>
+            <li><span class="keyword">T</span> = nombre total de tokens</li>
+          </ul>
+          <p class="lead" style="font-size:22px;margin-top:22px">Apprentissage <span class="keyword">auto-supervisé</span> : le code sert lui-même de label.</p>
+        </div>
+        <div class="card">
+          <h3>Pipeline dentraînement</h3>
+          <ul class="bullets">
+            <li>Point de départ : <span class="keyword">GPT pré-entraîné</span></li>
+            <li>Collecte et nettoyage dun corpus de code</li>
+            <li>Tokenisation adaptée à la programmation</li>
+            <li>Fonction de coût : <span class="accent2 keyword">Cross-Entropy Loss</span></li>
+            <li>Optimiseur : <span class="keyword">AdamW</span> ou Adam selon les implémentations décrites</li>
+            <li>Scheduler : <span class="keyword">cosine decay</span> ou variante proche</li>
+          </ul>
+          <p class="mini" style="margin-top:18px">Objectif : réduire lécart entre le token prédit et le token réel.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Codex : distribué">
+      <div class="top"><span><span class="dot"></span>Entraînement distribué</span><span class="num"></span></div>
+      <h2 class="title">Entraînement distribué</h2>
+      <p class="lead" style="margin-top:10px">Un modèle avec des milliards de paramètres ne tient pas facilement sur un seul GPU.</p>
+      <div class="grid4" style="margin-top:30px">
+        <div class="card"><h3>Data Parallelism</h3><p>Le batch est réparti sur plusieurs GPUs.</p></div>
+        <div class="card"><h3>Model Parallelism</h3><p>Le modèle est réparti entre plusieurs GPUs.</p></div>
+        <div class="card"><h3>Pipeline Parallelism</h3><p>Les micro-batches circulent en pipeline.</p></div>
+        <div class="card"><h3>Mixed Precision</h3><p><span class="keyword">FP16</span> réduit la mémoire et accélère lentraînement.</p></div>
+      </div>
+      <div class="grid3" style="margin-top:24px">
+        <div class="card"><h3>Gradient accumulation</h3><p>Permet de simuler un batch plus grand sans dépasser la mémoire.</p></div>
+        <div class="card"><h3>Supervised fine-tuning</h3><p>Utilisé dans certaines variantes ou étapes complémentaires.</p></div>
+        <div class="card"><h3>Fin de vie de lAPI</h3><p>Les anciens modèles Codex ont été retirés en <span class="keyword">mars 2023</span>, puis remplacés par des modèles plus récents.</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Codex : HumanEval">
+      <div class="top"><span><span class="dot"></span>valuation</span><span class="num"></span></div>
+      <h2 class="title">valuation  HumanEval</h2>
+      <div class="grid2" style="margin-top:32px">
+        <div class="card">
+          <h3>Pourquoi pas BLEU ?</h3>
+          <p>Deux programmes différents peuvent être <span class="keyword">corrects</span> sans avoir le même texte. Une simple comparaison textuelle est donc insuffisante.</p>
+          <div class="badge" style="margin-top:22px">Message clé : le code doit fonctionner, pas seulement ressembler à une référence.</div>
+        </div>
+        <div class="card">
+          <h3>HumanEval</h3>
+          <ul class="bullets">
+            <li>Benchmark proposé par <span class="keyword">OpenAI</span></li>
+            <li><span class="accent2 keyword">164 problèmes</span> de programmation</li>
+            <li>Chaque problème contient une signature de fonction, une docstring et des tests unitaires</li>
+            <li>Le code généré est <span class="keyword">exécuté</span></li>
+          </ul>
+          <p class="lead" style="font-size:22px;margin-top:20px">Codex est donc évalué <span class="keyword">fonctionnellement</span> : il faut passer les tests.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Codex : pass@k">
+      <div class="top"><span><span class="dot"></span>Métrique</span><span class="num"></span></div>
+      <h2 class="title">Métrique pass@k</h2>
+      <div class="grid2" style="margin-top:30px">
+        <div class="card">
+          <div class="formula">pass@k = 1 - C(n-c, k) / C(n, k)</div>
+          <ul class="bullets" style="margin-top:22px">
+            <li><span class="keyword">n</span> = nombre total de solutions générées</li>
+            <li><span class="keyword">c</span> = nombre de solutions correctes</li>
+            <li><span class="keyword">k</span> = nombre de solutions testées</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Exemple</h3>
+          <p>Si le modèle génère <span class="keyword">100 solutions</span> et que <span class="keyword">28</span> sont correctes :</p>
+          <ul class="bullets">
+            <li><span class="keyword">pass@1</span>  28 %</li>
+            <li><span class="keyword">pass@100</span> peut être beaucoup plus élevé</li>
+          </ul>
+          <p class="lead" style="font-size:22px;margin-top:18px">Plus <span class="keyword">k</span> est grand, plus le modèle a de chances de proposer au moins une solution correcte.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Codex : résultats">
+      <div class="top"><span><span class="dot"></span>Résultats</span><span class="num"></span></div>
+      <h2 class="title">Résultats  Codex vs GPT-3</h2>
+      <table class="tbl" style="margin-top:34px">
+        <thead>
+          <tr><th>Modèle</th><th>pass@1</th><th>pass@100</th><th>Lecture</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>GPT-3 généraliste</td><td> 0 %</td><td> 0 %</td><td>Très faible performance sur HumanEval</td></tr>
+          <tr><td>Codex 12B</td><td><span class="accent2 keyword">28.8 %</span></td><td><span class="accent2 keyword">72.3 %</span></td><td>Bond net après spécialisation sur le code</td></tr>
+        </tbody>
+      </table>
+      <div class="grid2" style="margin-top:28px">
+        <div class="card">
+          <h3>Message clé</h3>
+          <p>La <span class="accent2 keyword">spécialisation sur le code</span> peut surpasser la taille brute du modèle.</p>
+        </div>
+        <div class="card">
+          <h3>Conclusion technique</h3>
+          <p>Codex, avec beaucoup moins de paramètres que <span class="keyword">GPT-3 175B</span>, obtient de bien meilleurs résultats sur les tâches de programmation.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Codex : limites">
+      <div class="top"><span><span class="dot"></span>Limites</span><span class="num"></span></div>
+      <h2 class="title">Limites de Codex</h2>
+      <div class="grid3" style="margin-top:30px">
+        <div class="card"><h3>1. Raisonnement long</h3><p>Le modèle peut perdre la cohérence sur des chaînes détapes complexes.</p></div>
+        <div class="card"><h3>2. Dépendance au prompt</h3><p>La qualité dépend fortement de la formulation de la demande.</p></div>
+        <div class="card"><h3>3. Vulnérabilités</h3><p>Il peut reproduire des failles déjà présentes dans les données dentraînement.</p></div>
+        <div class="card"><h3>4. Hallucinations</h3><p>Il peut inventer des fonctions, des bibliothèques ou des API inexistantes.</p></div>
+        <div class="card"><h3>5. API retirée</h3><p>Les anciens modèles Codex ont été retirés en mars 2023.</p></div>
+        <div class="card"><h3>Message</h3><p>Puissant, mais <span class="danger keyword">pas infaillible</span>.</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Codex : résumé">
+      <div class="top"><span><span class="dot"></span>Conclusion Codex</span><span class="num"></span></div>
+      <h2 class="title">Résumé - Pourquoi Codex est important ?</h2>
+      <div class="grid2" style="margin-top:34px">
+        <div class="card">
+          <ul class="bullets lead" style="font-size:24px;max-width:none">
+            <li>Codex = <span class="keyword">GPT</span> + <span class="accent2 keyword">fine-tuning sur du code</span></li>
+            <li>Il transforme le langage naturel en code</li>
+            <li>Il utilise une architecture <span class="keyword">Transformer decoder-only</span></li>
+            <li>Il est entraîné avec la prédiction du token suivant</li>
+            <li>Il est évalué avec <span class="keyword">HumanEval</span> et <span class="keyword">pass@k</span></li>
+            <li>Il a ouvert la voie aux assistants de programmation modernes</li>
+          </ul>
+        </div>
+        <div class="stack">
+          <div class="grid2" style="gap:16px">
+            <div class="kpi"><b class="accent2"> 12B</b><span>Paramètres</span></div>
+            <div class="kpi"><b class="accent2">4 096</b><span>Contexte</span></div>
+            <div class="kpi"><b class="accent2">28.8 %</b><span>pass@1</span></div>
+            <div class="kpi"><b class="accent2">72.3 %</b><span>pass@100</span></div>
+          </div>
+          <div class="card">
+            <h3>Ouverture</h3>
+            <p>Codex a inspiré des outils et modèles plus récents comme <span class="keyword">GitHub Copilot</span>, <span class="keyword">Code LLaMA</span>, <span class="keyword">StarCoder</span> et <span class="keyword">DeepSeek Coder</span>.</p>
+            <p class="lead" style="font-size:22px;margin-top:18px">Codex a marqué une étape importante : il a montré quun modèle de langage pouvait devenir un véritable assistant de programmation.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="LLaMA : introduction">
+      <div class="top"><span><span class="dot"></span>LLaMA : introduction</span><span class="num"></span></div>
+      <div class="grid2" style="margin-top:48px">
+        <div>
+          <h2 class="title">LLaMA  Large Language Model Meta AI</h2>
+          <ul class="bullets lead" style="font-size:25px;max-width:none">
+            <li>Développé par <span class="accent3 keyword">Meta AI</span>, anciennement Facebook AI</li>
+            <li>Première version publiée en <span class="keyword">février 2023</span></li>
+            <li>Modèle de type <span class="keyword">décodeur</span>, utilisé pour la génération de texte</li>
+            <li>Famille de modèles performants et relativement accessibles</li>
+          </ul>
+          <div class="badge" style="margin-top:28px">Pourquoi LLaMA est important ?</div>
+          <ul class="bullets" style="margin-top:16px">
+            <li>Très bonnes performances par rapport à la taille</li>
+            <li>Plus accessible que plusieurs modèles propriétaires</li>
+            <li>Peut être adapté, étudié et parfois exécuté localement selon la version</li>
+          </ul>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <h3 class="accent3">Idée-clé</h3>
+            <p>LLaMA a fortement accéléré lécosystème open-source des <span class="keyword">LLMs</span>.</p>
+          </div>
+          <div class="grid3">
+            <div class="kpi"><b>2023</b><span>LLaMA 1</span></div>
+            <div class="kpi"><b>2024</b><span>LLaMA 3</span></div>
+            <div class="kpi"><b>2025</b><span>LLaMA 4</span></div>
+          </div>
+          
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="LLaMA : vue densemble">
+      <div class="top"><span><span class="dot"></span>LLaMA : vue densemble</span><span class="num"></span></div>
+      <h2 class="title">Architecture LLaMA  Vue densemble</h2>
+      <p class="lead">LLaMA reprend le <span class="keyword">Transformer</span> avec des choix modernes : <span class="accent3 keyword">RMSNorm</span>, <span class="accent3 keyword">RoPE</span>, <span class="accent3 keyword">SwiGLU</span> et connexions <span class="keyword">résiduelles</span>.</p>
+      <div class="pipeline" style="margin-top:40px">
+        <div class="block llama">Input</div><div class="arrow"></div>
+        <div class="block llama">Tokenisation</div><div class="arrow"></div>
+        <div class="block llama">Embeddings</div><div class="arrow"></div>
+        <div class="block llama">[RMSNorm  Self-Attention    RMSNorm  FFN SwiGLU  ]  N</div><div class="arrow"></div>
+        <div class="block llama">RMSNorm</div><div class="arrow"></div>
+        <div class="block llama">Linear</div><div class="arrow"></div>
+        <div class="block llama">Softmax</div><div class="arrow"></div>
+        <div class="block llama">Token prédit </div>
+      </div>
+
+    </section>
+
+    <section class="slide" data-label="Tokenisation et embeddings">
+      <div class="top"><span><span class="dot"></span>Tokenisation et embeddings</span><span class="num"></span></div>
+      <div class="grid2" style="margin-top:42px">
+        <div class="card">
+          <h2 class="title" style="margin-top:0;font-size:46px">tape 1 &amp; 2 : Tokenisation + Embeddings</h2>
+          <h3>Tokenisation</h3>
+          <div class="codebox">"Je m'appelle RIM"
+ ["Je", "m'", "appelle", "RIM"]
+ [528, 76, 41672, 82910]</div>
+          <ul class="bullets">
+            <li>Le texte est découpé en <span class="keyword">tokens</span></li>
+            <li>Chaque token reçoit un identifiant numérique</li>
+            <li>LLaMA 3 utilise un vocabulaire denviron <span class="keyword">128 000 tokens</span></li>
+          </ul>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <h3>Embeddings</h3>
+            <ul class="bullets">
+              <li>Chaque token devient un vecteur numérique</li>
+              <li>Le vecteur vit dans un espace de grande dimension</li>
+              <li>Des mots proches en sens ont des vecteurs proches</li>
+            </ul>
+            <div class="formula">"chat"  "chien"
+"chat"  "voiture"</div>
+          </div>
+          <div class="card">
+            <p><span class="keyword">Embeddings</span> = représentation continue qui prépare les calculs d<span class="keyword">attention</span>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="RMSNorm">
+      <div class="top"><span><span class="dot"></span>RMSNorm</span><span class="num"></span></div>
+      <div class="grid2" style="margin-top:46px">
+        <div class="card">
+          <h2 class="title" style="margin-top:0">RMSNorm  Normalisation</h2>
+          <h3>Problème</h3>
+          <div class="formula danger">[0.002, 3200, 0.0001, 850] </div>
+          <p>Après plusieurs calculs, les valeurs peuvent devenir instables.</p>
+          <h3 style="margin-top:24px">Solution</h3>
+          <p><span class="keyword">RMSNorm</span> divise par la racine carrée de la moyenne des carrés.</p>
+          <div class="formula accent3">[0.001, 1.70, 0.00, 0.43] </div>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <ul class="bullets">
+              <li>Placée avant les blocs <span class="keyword">Self-Attention</span> et <span class="keyword">FFN</span></li>
+              <li>Aide à stabiliser lentraînement</li>
+              <li>Plus simple et souvent plus rapide que <span class="keyword">LayerNorm</span></li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="formula">RMS(x) = (moyenne(x²))
+Sortie = x / RMS(x)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Self-Attention et RoPE">
+      <div class="top"><span><span class="dot"></span>Self-Attention et RoPE</span><span class="num"></span></div>
+      <div class="grid2" style="margin-top:40px">
+        <div class="card">
+          <h2 class="title" style="margin-top:0">Self-Attention + RoPE</h2>
+          <h3>Self-Attention</h3>
+          <ul class="bullets">
+            <li>Chaque token crée trois vecteurs : <span class="keyword">Q</span>, <span class="keyword">K</span>, <span class="keyword">V</span></li>
+            <li>Le modèle compare <span class="keyword">Q</span> avec <span class="keyword">K</span> pour estimer limportance</li>
+            <li>Score = <span class="mono">Q · K / d</span></li>
+            <li>Masque causal : pas daccès aux tokens futurs</li>
+            <div class="formula">Attn(Q,K,V) = softmax((QK / d_k) + M)V</div>
+
+            <li><span class="keyword">Softmax</span> transforme les scores en probabilités</li>
+            <li>Résultat = somme pondérée des <span class="keyword">V</span></li>
+          </ul>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <h3>RoPE</h3>
+            <ul class="bullets">
+              <li><span class="keyword">RoPE</span> = <span class="keyword">Rotary Position Embedding</span></li>
+              <li>Encode la position des tokens dans la séquence</li>
+              <li>Un même mot na pas exactement la même représentation selon sa position</li>
+            </ul>
+            <div class="formula">"je" en position 1  "je" en position 5</div>
+          </div>
+          <div class="card">
+            <p>Intuition : la position est injectée par une rotation du vecteur, ce qui aide le modèle à gérer lordre des mots.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="FFN SwiGLU">
+      <div class="top"><span><span class="dot"></span>FFN SwiGLU</span><span class="num"></span></div>
+      <div class="grid2" style="margin-top:46px">
+        <div class="card">
+          <h2 class="title" style="margin-top:0">FFN SwiGLU  Réseau Feedforward</h2>
+          <p>Après lattention, le réseau <span class="keyword">Feedforward</span> traite chaque token individuellement.</p>
+          <div class="formula">4096  11008  SwiGLU  4096</div>
+      <div class="formula">FFN(x) = W · SwiGLU(Wx)</div>
+            <div class="formula">SwiGLU(x) = (xW)  SiLU(xW) W</div>
+
+        </div>
+        <div class="stack">
+          <div class="card">
+            <p><span class="keyword">SwiGLU</span> améliore souvent lexpressivité du bloc feedforward sans changer la logique générale du <span class="keyword">Transformer</span>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Connexion résiduelle">
+      <div class="top"><span><span class="dot"></span>Connexion résiduelle</span><span class="num"></span></div>
+      <div class="grid2" style="margin-top:46px">
+        <div class="card">
+          <h2 class="title" style="margin-top:0">Connexion Résiduelle </h2>
+          <h3>Problème</h3>
+          <p>Après beaucoup de couches, linformation initiale peut se perdre.</p>
+          <h3 style="margin-top:22px">Solution</h3>
+          <p>On ajoute lentrée dorigine au résultat du calcul.</p>
+          <div class="formula">Sortie = X + Attention(X)
+Sortie = X_mid + FFN(X_mid)</div>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <p>Le modèle conserve linformation initiale tout en ajoutant progressivement du contexte.</p>
+          </div>
+          <div class="card">
+            <div class="formula">X + contexte couche 1
++ contexte couche 2
++ ...
++ contexte couche N</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Prédiction finale">
+      <div class="top"><span><span class="dot"></span>Prédiction finale</span><span class="num"></span></div>
+      <div class="grid2" style="margin-top:44px">
+        <div class="card">
+          <h2 class="title" style="margin-top:0">Prédiction finale  Linear + Softmax</h2>
+          <h3>Linear</h3>
+          <p>Le vecteur final est transformé en scores pour tous les tokens du vocabulaire.</p>
+          <div class="formula">Vecteur final  scores pour 128 000 tokens</div>
+          <h3 style="margin-top:22px">Softmax</h3>
+          <p>Les scores deviennent des probabilités.</p>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <div class="formula">"Je m'appelle ___"
+ "" : 82 %
+ "Marie" : 12 %
+ "chat" : 0.1 %</div>
+          </div>
+          <div class="card">
+            <p><span class="keyword">Génération autorégressive</span> : le modèle génère le texte token par token, puis recommence avec le nouveau contexte.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="volution de LLaMA">
+      <div class="top"><span><span class="dot"></span>volution de LLaMA</span><span class="num"></span></div>
+      <h2 class="title">volution de LLaMA</h2>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Version</th>
+            <th>Date</th>
+            <th>Points-clés</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="accent3">LLaMA 1</td>
+            <td>février 2023</td>
+            <td>7B, 13B, 33B, 65B paramètres ; surtout destiné à la recherche</td>
+          </tr>
+          <tr>
+            <td class="accent3">LLaMA 2</td>
+            <td>juillet 2023</td>
+            <td>Usage commercial autorisé sous licence ; versions conversationnelles alignées ; contexte plus long</td>
+          </tr>
+          <tr>
+            <td class="accent3">LLaMA 3</td>
+            <td>avril 2024</td>
+            <td>Meilleures performances ; vocabulaire plus grand ; meilleure qualité en dialogue et raisonnement</td>
+          </tr>
+          <tr>
+            <td class="accent3">LLaMA 4</td>
+            <td>avril 2025</td>
+            <td>Annonce officielle de Meta ; modèles multimodaux avec architecture <span class="keyword">MoE</span> pour certaines variantes</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide" data-label="Entraînement de LLaMA">
+      <div class="top"><span><span class="dot"></span>Entraînement de LLaMA</span><span class="num"></span></div>
+      <h2 class="title">Entraînement de LLaMA</h2>
+      <div class="flowgrid">
+        <div class="card">
+          <h3>Phase 1</h3>
+          <p><span class="keyword">Pre-training</span></p>
+          <p>Apprentissage sur une très grande quantité de textes pour prédire le token suivant.</p>
+        </div>
+        <div class="card">
+          <h3>Phase 2</h3>
+          <p><span class="keyword">Fine-tuning</span> supervisé</p>
+          <p>Exemples de questions-réponses pour suivre des instructions.</p>
+        </div>
+        <div class="card">
+          <h3>Phase 3</h3>
+          <p><span class="keyword">RLHF</span> / alignement</p>
+          <p>Préférences humaines pour rendre les réponses plus utiles et plus sûres.</p>
+        </div>
+        <div class="card">
+          <h3>Optimizer</h3>
+          <p><span class="keyword">AdamW</span> est une base fréquente pour ce type dentraînement.</p>
+        </div>
+        <div class="card">
+          <h3>Idée-clé</h3>
+          <p><span class="keyword">Pre-training</span> apprend la langue ; lalignement apprend le comportement attendu.</p>
+        </div>
+      </div>
+      <div class="formula">Grand corpus  apprentissage général
+SFT  suivi dinstructions
+RLHF  réponses plus utiles et plus sûres</div>
+    </section>
+
+    <section class="slide" data-label="Conclusion LLaMA">
+      <div class="top"><span><span class="dot"></span>Conclusion LLaMA</span><span class="num"></span></div>
+      <div class="grid2" style="margin-top:48px">
+        <div class="card">
+          <h2 class="title" style="margin-top:0">Pourquoi LLaMA est important ?</h2>
+          <ul class="bullets">
+            <li>LLaMA a rendu les grands modèles de langage plus accessibles</li>
+            <li>Il a accéléré la recherche open-source autour des LLMs</li>
+            <li>Son architecture reprend le <span class="keyword">Transformer</span> avec des améliorations modernes</li>
+            <li>Il est utilisé pour le chat, le résumé, le code et lanalyse documentaire</li>
+          </ul>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <p class="lead" style="font-size:26px;color:var(--ink);max-width:none">LLaMA montre quun modèle performant peut être à la fois puissant, adaptable et plus accessible.</p>
+          </div>
+          <div class="grid3">
+            <div class="kpi"><b>Open</b><span>Recherche et adaptation</span></div>
+            <div class="kpi"><b>Efficace</b><span>Taille / performance</span></div>
+            <div class="kpi"><b>Moderne</b><span>RoPE, RMSNorm, SwiGLU</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-label="Conclusion">
+      <div class="top"><span><span class="dot"></span>Conclusion</span><span class="num"></span></div>
+      <div class="center-halo" style="opacity:.75"></div>
+      <h2 class="title" style="text-align:center;margin-top:110px">3 modèles, 3 philosophies</h2>
+      <div class="grid3" style="margin-top:56px">
+        <div class="card"><h3 class="accent">PaLM</h3><p>Puissance brute, scaling massif, raisonnement</p></div>
+        <div class="card"><h3 class="accent2">Codex</h3><p>Spécialisation code, productivité, outils de développement</p></div>
+        <div class="card"><h3 class="accent3">LLaMA</h3><p>Accessibilité, open-source, adaptation rapide</p></div>
+      </div>
+      <p class="lead" style="margin:70px auto 0;text-align:center;max-width:1250px;color:var(--ink)">Le futur des LLMs nest pas un seul modèle universel : cest un écosystème de modèles complémentaires.</p>
+    </section>
+  </div>
+
+  <div class="nav"> /  pour naviguer</div>
+  <div class="progress" id="progress"></div>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    let i = 0;
+    const progress = document.getElementById('progress');
+
+    function renderKatex() {
+      document.querySelectorAll('.katex-eq').forEach((node) => {
+        const expr = node.getAttribute('data-expr');
+        if (!expr) return;
+        if (window.katex) {
+          window.katex.render(expr, node, { throwOnError: false, displayMode: true });
+        } else {
+          node.textContent = expr;
+        }
+      });
+    }
+
+    slides.forEach((slide, idx) => {
+      const num = slide.querySelector('.num');
+      if (num) {
+        const n = String(idx + 1).padStart(2, '0');
+        const total = String(slides.length).padStart(2, '0');
+        num.textContent = `${n} / ${total}`;
+      }
+    });
+
+    function show(n) {
+      slides[i].classList.remove('active');
+      i = (n + slides.length) % slides.length;
+      const nextSlide = slides[i];
+      nextSlide.classList.remove('reveal');
+      void nextSlide.offsetWidth;
+      nextSlide.classList.add('active');
+      nextSlide.classList.add('reveal');
+      progress.style.width = (((i + 1) / slides.length) * 100) + '%';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (['ArrowRight', 'PageDown', ' '].includes(e.key)) show(i + 1);
+      if (['ArrowLeft', 'PageUp'].includes(e.key)) show(i - 1);
+    });
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', renderKatex, { once: true });
+    } else {
+      renderKatex();
+    }
+    window.addEventListener('load', renderKatex, { once: true });
+
+    show(0);
+  </script>
+</body>
+</html>
+
+
